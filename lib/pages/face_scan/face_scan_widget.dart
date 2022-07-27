@@ -90,6 +90,7 @@ class _FaceScanCameraWidgetState extends State<FaceScanCameraWidget> {
     for (final Plane plane in image.planes) {
       allBytes.putUint8List(plane.bytes);
     }
+
     final bytes = allBytes.done().buffer.asUint8List();
 
     final Size imageSize = Size(image.width.toDouble(), image.height.toDouble());
@@ -139,6 +140,8 @@ class _FaceScanCameraWidgetState extends State<FaceScanCameraWidget> {
       final leftEyeOpen = faces.first.leftEyeOpenProbability;
       final rightEyeOpen = faces.first.rightEyeOpenProbability;
 
+      final headEulerAngleZ = faces.first.headEulerAngleZ;
+
       log('face distance : ${boundingBox.height.floor()}');
       log('face center : ${boundingBox.center.distance}');
 
@@ -146,7 +149,10 @@ class _FaceScanCameraWidgetState extends State<FaceScanCameraWidget> {
 
       log('left eye open : $leftEyeOpen');
       log('right eye open : $rightEyeOpen');
+
       log('bottom month : ${bottomMouth!.position.y}');
+
+      log('head angle z : ${headEulerAngleZ}');
     }
   }
 
@@ -154,40 +160,33 @@ class _FaceScanCameraWidgetState extends State<FaceScanCameraWidget> {
   Widget build(BuildContext context) {
     if (isCameraInitialize) {
       // show camera preview
-      return Center(
-        child: LayoutBuilder(builder: (context, constraints) {
-          var scale = (constraints.maxWidth / constraints.maxHeight) * cameraValue.aspectRatio;
-          if (scale < 1) scale = 1 / scale;
-          return Transform.scale(
-            scale: scale,
-            child: CameraPreview(cameraController!),
-          );
-        }),
-      );
+      return LayoutBuilder(builder: (contaxt, constraints) {
+        return ClipOval(
+            child: SizedBox(
+                width: constraints.maxWidth,
+                height: constraints.maxWidth,
+                child: Center(
+                  child: LayoutBuilder(builder: (context, constraints) {
+                    var scale = (constraints.maxWidth / constraints.maxHeight) * cameraValue.aspectRatio;
+                    if (scale < 1) scale = 1 / scale;
+                    return Transform.scale(
+                      scale: scale,
+                      child: CameraPreview(cameraController!),
+                    );
+                  }),
+                )));
+      });
     } else {
       return Container();
     }
   }
 }
 
-class FaceScanWidget extends StatefulWidget {
+class FaceScanWidget extends StatelessWidget {
   const FaceScanWidget({Key? key}) : super(key: key);
 
   @override
-  State<FaceScanWidget> createState() => _FaceScanWidgetState();
-}
-
-class _FaceScanWidgetState extends State<FaceScanWidget> {
-  @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (contaxt, constraints) {
-      return ClipOval(
-        child: SizedBox(
-          width: constraints.maxWidth,
-          height: constraints.maxWidth,
-          child: const FaceScanCameraWidget(),
-        ),
-      );
-    });
+    return FaceScanCameraWidget();
   }
 }

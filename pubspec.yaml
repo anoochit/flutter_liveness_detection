@@ -28,7 +28,6 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
   camera: ^0.10.0
-
   cupertino_icons: ^1.0.2
   flutter:
     sdk: flutter
