@@ -7,7 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 class FaceScanCameraWidget extends StatefulWidget {
-  const FaceScanCameraWidget({Key? key}) : super(key: key);
+  const FaceScanCameraWidget({Key? key, required this.onChange}) : super(key: key);
+
+  final ValueChanged<int> onChange;
 
   @override
   State<FaceScanCameraWidget> createState() => _FaceScanCameraWidgetState();
@@ -20,16 +22,36 @@ class _FaceScanCameraWidgetState extends State<FaceScanCameraWidget> {
   late Timer captureTimer;
   late bool isCameraInitialize = false;
 
+  int stepIndex = 0;
+  double faceHeightOffset = 600;
+  double headZAnagleOffset = 1.5;
+  double blinkOffset = 0.15;
+  double headZAnagleBase = 0.0;
+  int bottomMouthBase = 0;
+  int bottomMouthBaseOffset = 50;
+
+  static List<String> listState = [
+    "Put you face on frame",
+    "Blink your eyes",
+    "Turn head left",
+    "Turn head right",
+    "Open your mouth",
+    "OK",
+  ];
+
   @override
   void initState() {
     super.initState();
+    // check camera is available
     isCameraAvailable();
   }
 
   isCameraAvailable() {
+    // check available camera
     availableCameras().then((listCameraDescription) {
       log('camera found = ${listCameraDescription.length}');
 
+      // process only front camera
       for (var camera in listCameraDescription) {
         if (camera.lensDirection.name == "front") {
           // get contoller
@@ -46,7 +68,7 @@ class _FaceScanCameraWidgetState extends State<FaceScanCameraWidget> {
             frontCamera = camera;
 
             // start image stream for image processing
-            Future.delayed(Duration(seconds: 3)).then((value) {
+            Future.delayed(const Duration(seconds: 3)).then((value) {
               cameraController!.startImageStream((cameraImage) {
                 // de face dectection
                 faceDectection(image: cameraImage);
@@ -134,15 +156,19 @@ class _FaceScanCameraWidgetState extends State<FaceScanCameraWidget> {
 
     if (faces.isNotEmpty) {
       log('detect landmark');
+      // step 1 ask user for face detection
       final Rect boundingBox = faces.first.boundingBox;
+
       final noseBase = faces.first.landmarks[FaceLandmarkType.noseBase];
+
       final bottomMouth = faces.first.landmarks[FaceLandmarkType.bottomMouth];
+
       final leftEyeOpen = faces.first.leftEyeOpenProbability;
       final rightEyeOpen = faces.first.rightEyeOpenProbability;
 
       final headEulerAngleZ = faces.first.headEulerAngleZ;
 
-      log('face distance : ${boundingBox.height.floor()}');
+      log('face distance : ${boundingBox.height}');
       log('face center : ${boundingBox.center.distance}');
 
       log('nose postion : x=${noseBase!.position.x}, y=${noseBase.position.y}');
@@ -153,7 +179,74 @@ class _FaceScanCameraWidgetState extends State<FaceScanCameraWidget> {
       log('bottom month : ${bottomMouth!.position.y}');
 
       log('head angle z : ${headEulerAngleZ}');
+
+      log('detection step : ${stepIndex}');
+
+      // check when face in frame
+      if ((boundingBox.height > faceHeightOffset)) {
+        // if already check found and in frame
+        if (stepIndex < 1) {
+          changeStateDection(1);
+        }
+      } else {
+        changeStateDection(0);
+      }
+
+      // if face is already in frame
+      if (stepIndex > 0) {
+        switch (stepIndex) {
+          case 1:
+            {
+              log('step blink detection');
+              if ((leftEyeOpen! < blinkOffset) && (rightEyeOpen! < blinkOffset)) {
+                log('step blink detection : yes');
+                headZAnagleBase = headEulerAngleZ!;
+                bottomMouthBase = bottomMouth.position.y;
+                changeStateDection(2);
+              }
+            }
+            break;
+
+          case 2:
+            {
+              log('head base ${headZAnagleBase}');
+              log('step turn head left detection : ${(headEulerAngleZ)} ');
+              if (headEulerAngleZ! < (headZAnagleBase - headZAnagleOffset)) {
+                log('step turn head left detection : yes');
+                changeStateDection(3);
+              }
+            }
+            break;
+
+          case 3:
+            {
+              log('step face turn right detection : ${(headEulerAngleZ)}');
+              if (headEulerAngleZ! > (headZAnagleBase + headZAnagleOffset)) {
+                log('step turn head righ : yes');
+                changeStateDection(4);
+              }
+            }
+            break;
+
+          case 4:
+            {
+              log('step open mouth : ${bottomMouthBase}');
+              log('step open mouth detection : ${bottomMouth.position.y}');
+              if ((bottomMouth.position.y) > (bottomMouthBase + bottomMouthBaseOffset)) {
+                log('step open mouth detection : yes');
+                changeStateDection(5);
+              }
+            }
+            break;
+        }
+      }
     }
+  }
+
+  changeStateDection(int state) {
+    setState(() {
+      stepIndex = state;
+    });
   }
 
   @override
@@ -161,32 +254,29 @@ class _FaceScanCameraWidgetState extends State<FaceScanCameraWidget> {
     if (isCameraInitialize) {
       // show camera preview
       return LayoutBuilder(builder: (contaxt, constraints) {
-        return ClipOval(
-            child: SizedBox(
-                width: constraints.maxWidth,
-                height: constraints.maxWidth,
-                child: Center(
-                  child: LayoutBuilder(builder: (context, constraints) {
-                    var scale = (constraints.maxWidth / constraints.maxHeight) * cameraValue.aspectRatio;
-                    if (scale < 1) scale = 1 / scale;
-                    return Transform.scale(
-                      scale: scale,
-                      child: CameraPreview(cameraController!),
-                    );
-                  }),
-                )));
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipOval(
+                child: SizedBox(
+                    width: constraints.maxWidth,
+                    height: constraints.maxWidth,
+                    child: Center(
+                      child: LayoutBuilder(builder: (context, constraints) {
+                        var scale = (constraints.maxWidth / constraints.maxHeight) * cameraValue.aspectRatio;
+                        if (scale < 1) scale = 1 / scale;
+                        return Transform.scale(
+                          scale: scale,
+                          child: CameraPreview(cameraController!),
+                        );
+                      }),
+                    ))),
+            Text('${listState[stepIndex]}')
+          ],
+        );
       });
     } else {
       return Container();
     }
-  }
-}
-
-class FaceScanWidget extends StatelessWidget {
-  const FaceScanWidget({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return FaceScanCameraWidget();
   }
 }

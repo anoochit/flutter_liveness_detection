@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_facescan/pages/face_scan/face_scan_widget.dart';
 
@@ -8,7 +10,11 @@ class FaceScanPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: FaceScanWidget(),
+        child: FaceScanCameraWidget(
+          onChange: (value) {
+            log('face scan result : ${value}');
+          },
+        ),
       ),
     );
   }
