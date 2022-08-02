@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_facescan/pages/face_scan/face_scan.dart';
+import 'package:flutter_facescan/pages/face_scan/face_liveness.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({Key? key}) : super(key: key);
