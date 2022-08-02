@@ -7,9 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 class FaceScanLivenessWidget extends StatefulWidget {
-  const FaceScanLivenessWidget({Key? key, required this.onChange}) : super(key: key);
+  const FaceScanLivenessWidget({Key? key, required this.onStateChange}) : super(key: key);
 
-  final ValueChanged<int> onChange;
+  final ValueChanged<int> onStateChange;
 
   @override
   State<FaceScanLivenessWidget> createState() => _FaceScanLivenessWidgetState();
@@ -31,12 +31,21 @@ class _FaceScanLivenessWidgetState extends State<FaceScanLivenessWidget> {
   int bottomMouthBaseOffset = 50;
 
   static List<String> listState = [
-    "Put you face on frame",
+    "Put your face on frame",
     "Blink your eyes",
     "Turn head left",
     "Turn head right",
     "Open your mouth",
     "OK",
+  ];
+
+  static List<Color> listColors = [
+    Colors.grey.shade200,
+    Colors.green.shade50,
+    Colors.green.shade100,
+    Colors.green.shade200,
+    Colors.green.shade400,
+    Colors.green.shade500,
   ];
 
   @override
@@ -244,6 +253,7 @@ class _FaceScanLivenessWidgetState extends State<FaceScanLivenessWidget> {
   }
 
   changeStateDection(int state) {
+    widget.onStateChange(state);
     setState(() {
       stepIndex = state;
     });
@@ -257,23 +267,34 @@ class _FaceScanLivenessWidgetState extends State<FaceScanLivenessWidget> {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ClipOval(
-                child: SizedBox(
-                    width: constraints.maxWidth,
-                    height: constraints.maxWidth,
-                    child: Center(
-                      child: LayoutBuilder(builder: (context, constraints) {
-                        var scale = (constraints.maxWidth / constraints.maxHeight) * cameraValue.aspectRatio;
-                        if (scale < 1) scale = 1 / scale;
-                        return Transform.scale(
-                          scale: scale,
-                          child: CameraPreview(cameraController!),
-                        );
-                      }),
-                    ))),
-            Text(
-              '${listState[stepIndex]}',
-              style: Theme.of(context).textTheme.headline4,
+            Container(
+              width: constraints.maxWidth,
+              height: constraints.maxWidth,
+              decoration: BoxDecoration(
+                border: Border.all(width: 8, color: listColors[stepIndex]),
+                borderRadius: BorderRadius.circular(constraints.maxWidth / 2),
+              ),
+              child: ClipOval(
+                  child: SizedBox(
+                      width: constraints.maxWidth - 8,
+                      height: constraints.maxWidth - 8,
+                      child: Center(
+                        child: LayoutBuilder(builder: (context, constraints) {
+                          var scale = (constraints.maxWidth / constraints.maxHeight) * cameraValue.aspectRatio;
+                          if (scale < 1) scale = 1 / scale;
+                          return Transform.scale(
+                            scale: scale,
+                            child: CameraPreview(cameraController!),
+                          );
+                        }),
+                      ))),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                listState[stepIndex],
+                style: Theme.of(context).textTheme.headline5,
+              ),
             )
           ],
         );

@@ -11,8 +11,8 @@ class FaceScanPage extends StatelessWidget {
     return Scaffold(
       body: Center(
         child: FaceScanLivenessWidget(
-          onChange: (value) {
-            log('face scan result : ${value}');
+          onStateChange: (state) {
+            log('liveness state : ${state}');
           },
         ),
       ),
