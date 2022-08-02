@@ -6,16 +6,16 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
-class FaceScanCameraWidget extends StatefulWidget {
-  const FaceScanCameraWidget({Key? key, required this.onChange}) : super(key: key);
+class FaceScanLivenessWidget extends StatefulWidget {
+  const FaceScanLivenessWidget({Key? key, required this.onChange}) : super(key: key);
 
   final ValueChanged<int> onChange;
 
   @override
-  State<FaceScanCameraWidget> createState() => _FaceScanCameraWidgetState();
+  State<FaceScanLivenessWidget> createState() => _FaceScanLivenessWidgetState();
 }
 
-class _FaceScanCameraWidgetState extends State<FaceScanCameraWidget> {
+class _FaceScanLivenessWidgetState extends State<FaceScanLivenessWidget> {
   late CameraController? cameraController;
   late CameraValue cameraValue;
   late CameraDescription frontCamera;
@@ -23,8 +23,8 @@ class _FaceScanCameraWidgetState extends State<FaceScanCameraWidget> {
   late bool isCameraInitialize = false;
 
   int stepIndex = 0;
-  double faceHeightOffset = 600;
-  double headZAnagleOffset = 1.5;
+  double faceHeightOffset = 500;
+  double headZAnagleOffset = 1.0;
   double blinkOffset = 0.15;
   double headZAnagleBase = 0.0;
   int bottomMouthBase = 0;
@@ -271,7 +271,10 @@ class _FaceScanCameraWidgetState extends State<FaceScanCameraWidget> {
                         );
                       }),
                     ))),
-            Text('${listState[stepIndex]}')
+            Text(
+              '${listState[stepIndex]}',
+              style: Theme.of(context).textTheme.headline4,
+            )
           ],
         );
       });

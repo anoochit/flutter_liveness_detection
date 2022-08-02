@@ -10,7 +10,7 @@ class FaceScanPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: FaceScanCameraWidget(
+        child: FaceScanLivenessWidget(
           onChange: (value) {
             log('face scan result : ${value}');
           },
